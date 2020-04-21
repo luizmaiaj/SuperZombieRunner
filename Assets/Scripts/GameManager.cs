@@ -50,33 +50,50 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(!gameStarted && Time.timeScale == 0)
+        timeElapsed += Time.deltaTime;
+
+        FormatScore(); // update the score after updating the time elapsed
+
+        BlinkContinueText(); // blink the continue text (or not)
+
+        if (!gameStarted && Time.timeScale == 0 && Input.anyKeyDown)
         {
-            if(Input.anyKeyDown)
-            {
-                timeManager.ManipulateTime(1, 1f);
-                ResetGame();
-            }
+            timeManager.ManipulateTime(1, 1f);
+            ResetGame();
         }
 
-        if(!gameStarted)
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (++blinkTime % 40 == 0)
-            {
-                blink = blink > 0 ? 0f : 1f;
-            }
-
-            continueText.canvasRenderer.SetAlpha(blink);
-
-            var textColor = beatBestTime ? "#FF0" : "#FFF";
-
-            scoreText.text = "TIME: " + FormatTime(timeElapsed) + "\n<color=" + textColor + ">BEST: " + FormatTime(bestTime) + "</color>";
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit ();
+#endif
         }
-        else
+    }
+
+    void BlinkContinueText()
+    {
+        if (gameStarted)
         {
-            timeElapsed += Time.deltaTime;
+            continueText.canvasRenderer.SetAlpha(0f); // make continue text disappear
+            return;
+        }
+
+        continueText.canvasRenderer.SetAlpha((++blinkTime % 80) / 79); // alpha is between 0 and 1
+    }
+
+    void FormatScore()
+    {
+        if (gameStarted)
+        {
             scoreText.text = "TIME: " + FormatTime(timeElapsed);
+            return;
         }
+
+        string textColor = beatBestTime ? "#FF0" : "#FFF";
+
+        scoreText.text = "TIME: " + FormatTime(timeElapsed) + "\n<color=" + textColor + ">BEST: " + FormatTime(bestTime) + "</color>";
     }
 
     void OnPlayerKilled()
